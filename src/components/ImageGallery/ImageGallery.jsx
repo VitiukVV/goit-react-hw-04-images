@@ -10,6 +10,7 @@ export class ImageGallery extends Component {
   state = {
     searchValue: [],
     loading: false,
+    error: null,
   };
 
   async componentDidUpdate(prevProps, prevState) {
@@ -17,17 +18,16 @@ export class ImageGallery extends Component {
       const prevSearch = prevProps.searchValue;
       const nextSearch = this.props.searchValue;
       if (prevSearch !== nextSearch) {
-        this.setState({ loading: true });
+        this.setState({ loading: true, searchValue: [] });
         const response = await PixabayAPIRequest(nextSearch, this.props.page);
         if (response.totalHits < 1) {
+          this.setState({ loading: false });
           return alert(`${nextSearch} not found, Sorry!`);
         }
-        this.setState({ searchValue: response.hits });
-        this.setState({ loading: false });
-        console.log(response.hits);
+        this.setState({ searchValue: response.hits, loading: false });
       }
-    } catch (error) {
-      console.log(error.message);
+    } catch ({ message }) {
+      this.setState({ error: message });
     }
   }
 
