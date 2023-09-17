@@ -4,8 +4,7 @@ import { ImageGalleryItem } from 'components/ImageGalleryItem/ImageGalleryItem';
 import { PixabayAPIRequest } from 'components/PixabayAPI/API';
 import { Loader } from 'components/Loader/Loader';
 import { LoadMoreBtn } from 'components/LoadMoreBtn/LoadMoreBtn';
-
-// import PropTypes from 'prop-types';
+import PropTypes from 'prop-types';
 
 export class ImageGallery extends Component {
   state = {
@@ -79,6 +78,6 @@ export class ImageGallery extends Component {
   }
 }
 
-// ImageGallery.propTypes = {
-
-// };
+ImageGallery.propTypes = {
+  searchValue: PropTypes.string.isRequired,
+};
