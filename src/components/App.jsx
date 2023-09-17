@@ -8,7 +8,6 @@ import { ImageGallery } from './ImageGallery/ImageGallery';
 export class App extends Component {
   state = {
     searchValue: '',
-    page: 1,
   };
 
   handleFormSubmit = seacrhParam => {
@@ -16,11 +15,11 @@ export class App extends Component {
   };
 
   render() {
-    const { searchValue, page } = this.state;
+    const { searchValue } = this.state;
     return (
       <Container>
         <Searchbar onSubmit={this.handleFormSubmit}></Searchbar>
-        <ImageGallery searchValue={searchValue} page={page}></ImageGallery>
+        <ImageGallery searchValue={searchValue}></ImageGallery>
       </Container>
     );
   }
