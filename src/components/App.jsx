@@ -1,87 +1,75 @@
-import React, { Component } from 'react';
 import { Container } from './App.styled';
 import { Searchbar } from './Searchbar/Searchbar';
 import { ImageGallery } from './ImageGallery/ImageGallery';
 import { LoadMoreBtn } from './LoadMoreBtn/LoadMoreBtn';
 import { Loader } from './Loader/Loader';
 import { PixabayAPIRequest } from './PixabayAPI/API';
+import { useState, useEffect } from 'react';
 
-export class App extends Component {
-  state = {
-    searchRequest: '',
-    searchValue: [],
-    loading: false,
-    error: null,
-    page: 1,
-    totalPage: 0,
+export const App = () => {
+  const [searchRequest, setSearchRequest] = useState('');
+  const [searchValue, setSearchValue] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const [totalPage, setTotalPage] = useState(0);
+
+  const handleFormSubmit = seacrhParam => {
+    setSearchValue([]);
+    setPage(1);
+    setSearchRequest(seacrhParam);
   };
 
-  componentDidUpdate(prevProps, prevState) {
-    const prevSearch = prevState.searchRequest;
-    const nextSearch = this.state.searchRequest;
-    const { page } = this.state;
-    if (prevSearch !== nextSearch) {
-      this.firstSearch(nextSearch);
-    }
-    if (prevState.page !== page && page !== 1) {
-      this.loadMore(prevState, page, nextSearch);
-    }
-  }
-
-  handleFormSubmit = seacrhParam => {
-    this.setState({ searchRequest: seacrhParam });
+  const onChangePage = () => {
+    setPage(state => state + 1);
   };
 
-  firstSearch = async search => {
-    try {
-      this.setState({ loading: true, searchValue: [] });
-      const response = await PixabayAPIRequest(search, 1);
-      if (response.totalHits < 1) {
-        this.setState({ loading: false });
-        return alert(`${search} not found, Sorry!`);
+  const getNormalizedPhotos = arr => {
+    return arr.map(({ id, webformatURL, tags, largeImageURL }) => ({
+      id,
+      webformatURL,
+      tags,
+      largeImageURL,
+    }));
+  };
+
+  useEffect(() => {
+    const search = async () => {
+      try {
+        setLoading(true);
+        const { totalHits, hits } = await PixabayAPIRequest(
+          searchRequest,
+          page
+        );
+        if (totalHits < 1) {
+          setLoading(false);
+          return alert(`${search} not found, Sorry!`);
+        }
+        setSearchValue(prev =>
+          page === 1
+            ? getNormalizedPhotos(hits)
+            : [...prev, ...getNormalizedPhotos(hits)]
+        );
+        setTotalPage(Math.ceil(totalHits / 12));
+      } catch ({ message }) {
+        console.log(message);
+      } finally {
+        setLoading(false);
       }
-      this.setState({
-        searchValue: response.hits,
-        totalPage: Math.ceil(response.totalHits / 12),
-        page: 1,
-      });
-    } catch ({ message }) {
-      this.setState({ error: message });
-    } finally {
-      this.setState({ loading: false });
-    }
-  };
+    };
 
-  loadMore = async (prevState, page, nextSearch) => {
-    try {
-      this.setState({ loading: true });
-      const response = await PixabayAPIRequest(nextSearch, page);
-      this.setState(prevState => ({
-        searchValue: [...prevState.searchValue, ...response.hits],
-      }));
-    } catch ({ message }) {
-      this.setState({ error: message });
-    } finally {
-      this.setState({ loading: false });
-    }
-  };
+    if (!searchRequest) return;
 
-  onChangePage = () => {
-    this.setState(prevState => ({ page: prevState.page + 1 }));
-  };
+    search();
+  }, [searchRequest, page]);
 
-  render() {
-    const { searchValue, totalPage, page, loading } = this.state;
-
-    return (
-      <Container>
-        <Searchbar onSubmit={this.handleFormSubmit}></Searchbar>
-        <ImageGallery searchValue={searchValue}></ImageGallery>
-        {loading && <Loader></Loader>}
-        {totalPage > 1 && page < totalPage && (
-          <LoadMoreBtn onClick={this.onChangePage} />
-        )}
-      </Container>
-    );
-  }
-}
+  return (
+    <Container>
+      <Searchbar onSubmit={handleFormSubmit}></Searchbar>
+      <ImageGallery searchValue={searchValue}></ImageGallery>
+      {loading && <Loader></Loader>}
+      {totalPage > 1 && page < totalPage && (
+        <LoadMoreBtn onClick={onChangePage} />
+      )}
+    </Container>
+  );
+};
